@@ -1,0 +1,106 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install build tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install build wheel twine
+    
+    - name: Build package
+      run: |
+        python -m build
+        python -m wheel
+    
+    - name: List built packages
+      run: ls -lah dist/
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: python-package-distributions
+        path: dist/
+
+  publish-to-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/maagentclaw
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: python-package-distributions
+        path: dist/
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install twine
+      run: |
+        python -m pip install --upgrade pip
+        pip install twine
+    
+    - name: List packages to publish
+      run: ls -lah dist/
+    
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        twine upload dist/*
+
+  publish-to-testpypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/maagentclaw
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: python-package-distributions
+        path: dist/
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install twine
+      run: |
+        python -m pip install --upgrade pip
+        pip install twine
+    
+    - name: Publish to TestPyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+      run: |
+        twine upload --repository testpypi dist/*

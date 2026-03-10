@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAgentClaw - 多 Agent 管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .agent-list {
+            list-style: none;
+        }
+
+        .agent-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .agent-item:hover {
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .agent-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.2em;
+        }
+
+        .agent-role {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+
+        .agent-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+
+        .status-idle {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .status-running {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status-stopped {
+            background: #f44336;
+            color: white;
+        }
+
+        .agent-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .btn-secondary {
+            background: #9e9e9e;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #757575;
+        }
+
+        .message-box {
+            margin-top: 15px;
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .log-console {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-info {
+            color: #4caf50;
+        }
+
+        .log-warning {
+            color: #ff9800;
+        }
+
+        .log-error {
+            color: #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🦞 MAgentClaw</h1>
+            <p class="subtitle">多 Agent 管理与协作系统</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="card">
+                <h2>Agent 列表</h2>
+                <ul class="agent-list" id="agentList">
+                    <li class="agent-item">
+                        <div class="agent-header">
+                            <span class="agent-name">assistant</span>
+                            <div>
+                                <span class="agent-role">Assistant</span>
+                                <span class="agent-status status-idle">Idle</span>
+                            </div>
+                        </div>
+                        <div class="agent-actions">
+                            <button class="btn btn-primary" onclick="startAgent('assistant')">启动</button>
+                            <button class="btn btn-danger" onclick="stopAgent('assistant')">停止</button>
+                            <button class="btn btn-secondary" onclick="showMessageInput('assistant')">发消息</button>
+                        </div>
+                        <div class="message-box" id="message-box-assistant" style="display: none;">
+                            <input type="text" class="message-input" placeholder="输入消息..." id="message-input-assistant">
+                            <button class="btn btn-primary" onclick="sendMessage('assistant')">发送</button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>系统统计</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalAgents">1</div>
+                        <div class="stat-label">总 Agent 数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="runningAgents">0</div>
+                        <div class="stat-label">运行中</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalTasks">0</div>
+                        <div class="stat-label">总任务数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="completedTasks">0</div>
+                        <div class="stat-label">已完成任务</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>系统日志</h2>
+            <div class="log-console" id="logConsole">
+                <div class="log-entry log-info">[INFO] MAgentClaw 系统已启动</div>
+                <div class="log-entry log-info">[INFO] 等待 Agent 注册...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        async function fetchAgents() {
+            try {
+                const response = await fetch(`${API_BASE}/agents`);
+                const data = await response.json();
+                updateAgentList(data);
+                updateStats(data);
+            } catch (error) {
+                addLog(`获取 Agent 列表失败：${error.message}`, 'error');
+            }
+        }
+
+        function updateAgentList(data) {
+            const agentList = document.getElementById('agentList');
+            agentList.innerHTML = '';
+
+            data.agents.forEach(agentName => {
+                const state = data.states[agentName] || {};
+                const item = document.createElement('li');
+                item.className = 'agent-item';
+                item.innerHTML = `
+                    <div class="agent-header">
+                        <span class="agent-name">${agentName}</span>
+                        <div>
+                            <span class="agent-role">Agent</span>
+                            <span class="agent-status status-${state.status || 'idle'}">${(state.status || 'idle').toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <div class="agent-actions">
+                        <button class="btn btn-primary" onclick="startAgent('${agentName}')">启动</button>
+                        <button class="btn btn-danger" onclick="stopAgent('${agentName}')">停止</button>
+                        <button class="btn btn-secondary" onclick="showMessageInput('${agentName}')">发消息</button>
+                    </div>
+                    <div class="message-box" id="message-box-${agentName}" style="display: none;">
+                        <input type="text" class="message-input" placeholder="输入消息..." id="message-input-${agentName}">
+                        <button class="btn btn-primary" onclick="sendMessage('${agentName}')">发送</button>
+                    </div>
+                `;
+                agentList.appendChild(item);
+            });
+        }
+
+        function updateStats(data) {
+            document.getElementById('totalAgents').textContent = data.agents.length;
+            const runningCount = Object.values(data.states || {}).filter(s => s.status === 'running').length;
+            document.getElementById('runningAgents').textContent = runningCount;
+        }
+
+        async function startAgent(name) {
+            try {
+                const response = await fetch(`${API_BASE}/agents/${name}/start`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    addLog(`Agent ${name} 已启动`, 'info');
+                    fetchAgents();
+                } else {
+                    addLog(`启动 Agent ${name} 失败：${data.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`启动 Agent ${name} 失败：${error.message}`, 'error');
+            }
+        }
+
+        async function stopAgent(name) {
+            try {
+                const response = await fetch(`${API_BASE}/agents/${name}/stop`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    addLog(`Agent ${name} 已停止`, 'info');
+                    fetchAgents();
+                } else {
+                    addLog(`停止 Agent ${name} 失败：${data.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`停止 Agent ${name} 失败：${error.message}`, 'error');
+            }
+        }
+
+        function showMessageInput(name) {
+            const messageBox = document.getElementById(`message-box-${name}`);
+            messageBox.style.display = messageBox.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function sendMessage(name) {
+            const input = document.getElementById(`message-input-${name}`);
+            const content = input.value.trim();
+            if (!content) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/agents/${name}/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    addLog(`发送给 ${name}: ${content}`, 'info');
+                    addLog(`${name} 回复：${data.response.content}`, 'info');
+                    input.value = '';
+                    showMessageInput(name);
+                } else {
+                    addLog(`发送消息失败：${data.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`发送消息失败：${error.message}`, 'error');
+            }
+        }
+
+        function addLog(message, type = 'info') {
+            const console = document.getElementById('logConsole');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            console.appendChild(entry);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        // 初始加载
+        fetchAgents();
+        // 每 5 秒刷新一次
+        setInterval(fetchAgents, 5000);
+    </script>
+</body>
+</html>

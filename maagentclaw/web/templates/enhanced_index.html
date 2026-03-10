@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAgentClaw - 增强版管理界面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            color: #667eea;
+            font-size: 1.8em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-links button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-links button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.3em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .agent-item {
+            padding: 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .agent-item:hover {
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+            transform: translateX(5px);
+        }
+
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .agent-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .agent-status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8em;
+        }
+
+        .status-idle { background: #f0f0f0; color: #666; }
+        .status-running { background: #4caf50; color: white; }
+        .status-stopped { background: #f44336; color: white; }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0.2rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .btn-secondary {
+            background: #9e9e9e;
+            color: white;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .log-console {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 0.3rem;
+        }
+
+        .log-info { color: #4caf50; }
+        .log-warning { color: #ff9800; }
+        .log-error { color: #f44336; }
+
+        .tab-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab {
+            background: none;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <h1>🦞 MAgentClaw</h1>
+        <div class="nav-links">
+            <button onclick="showSection('dashboard')">仪表盘</button>
+            <button onclick="showSection('agents')">Agent</button>
+            <button onclick="showSection('configs')">配置</button>
+            <button onclick="showSection('sessions')">会话</button>
+            <button onclick="showSection('workspaces')">工作空间</button>
+            <button onclick="showSection('channels')">渠道</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 仪表盘 -->
+        <div id="dashboard" class="section active">
+            <div class="dashboard">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalAgents">0</div>
+                    <div class="stat-label">Agent 总数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="runningAgents">0</div>
+                    <div class="stat-label">运行中</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalSessions">0</div>
+                    <div class="stat-label">会话数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalWorkspaces">0</div>
+                    <div class="stat-label">工作空间</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>系统日志</h2>
+                <div class="log-console" id="logConsole">
+                    <div class="log-entry log-info">[INFO] MAgentClaw 增强版管理界面已启动</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent 管理 -->
+        <div id="agents" class="section">
+            <div class="card">
+                <h2>Agent 列表</h2>
+                <div id="agentList"></div>
+            </div>
+        </div>
+
+        <!-- 配置管理 -->
+        <div id="configs" class="section">
+            <div class="tab-container">
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('agentConfigs')">Agent 配置</button>
+                    <button class="tab" onclick="showTab('modelConfigs')">模型配置</button>
+                    <button class="tab" onclick="showTab('systemConfig')">系统配置</button>
+                </div>
+
+                <div id="agentConfigs" class="tab-content active">
+                    <button class="btn btn-primary" onclick="showCreateAgentModal()">+ 新建 Agent</button>
+                    <table id="agentConfigTable">
+                        <thead>
+                            <tr>
+                                <th>名称</th>
+                                <th>角色</th>
+                                <th>模型</th>
+                                <th>工作空间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div id="modelConfigs" class="tab-content">
+                    <table id="modelConfigTable">
+                        <thead>
+                            <tr>
+                                <th>名称</th>
+                                <th>提供商</th>
+                                <th>模型名</th>
+                                <th>上下文窗口</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div id="systemConfig" class="tab-content">
+                    <div id="systemConfigContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 会话管理 -->
+        <div id="sessions" class="section">
+            <div class="card">
+                <h2>会话列表</h2>
+                <div id="sessionList"></div>
+            </div>
+        </div>
+
+        <!-- 工作空间 -->
+        <div id="workspaces" class="section">
+            <div class="card">
+                <h2>工作空间列表</h2>
+                <div id="workspaceList"></div>
+            </div>
+        </div>
+
+        <!-- 渠道管理 -->
+        <div id="channels" class="section">
+            <div class="card">
+                <h2>渠道列表</h2>
+                <div id="channelList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        // 显示区域
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            
+            // 加载对应数据
+            switch(sectionId) {
+                case 'dashboard': loadStats(); break;
+                case 'agents': loadAgents(); break;
+                case 'configs': loadConfigs(); break;
+                case 'sessions': loadSessions(); break;
+                case 'workspaces': loadWorkspaces(); break;
+                case 'channels': loadChannels(); break;
+            }
+        }
+
+        // 显示标签页
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // 加载统计
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const stats = await response.json();
+                
+                document.getElementById('totalAgents').textContent = stats.agents;
+                document.getElementById('runningAgents').textContent = stats.agents; // 简化
+                document.getElementById('totalSessions').textContent = stats.sessions;
+                document.getElementById('totalWorkspaces').textContent = stats.workspaces;
+            } catch (error) {
+                addLog(`加载统计失败：${error.message}`, 'error');
+            }
+        }
+
+        // 加载 Agent
+        async function loadAgents() {
+            try {
+                const response = await fetch(`${API_BASE}/agents`);
+                const data = await response.json();
+                
+                const agentList = document.getElementById('agentList');
+                agentList.innerHTML = '';
+                
+                data.agents.forEach(agentName => {
+                    const state = data.states[agentName] || {};
+                    const item = document.createElement('div');
+                    item.className = 'agent-item';
+                    item.innerHTML = `
+                        <div class="agent-header">
+                            <span class="agent-name">${agentName}</span>
+                            <span class="agent-status status-${state.status || 'idle'}">${(state.status || 'idle').toUpperCase()}</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-primary" onclick="startAgent('${agentName}')">启动</button>
+                            <button class="btn btn-danger" onclick="stopAgent('${agentName}')">停止</button>
+                        </div>
+                    `;
+                    agentList.appendChild(item);
+                });
+            } catch (error) {
+                addLog(`加载 Agent 列表失败：${error.message}`, 'error');
+            }
+        }
+
+        // 加载配置
+        async function loadConfigs() {
+            await loadAgentConfigs();
+            await loadModelConfigs();
+        }
+
+        async function loadAgentConfigs() {
+            try {
+                const response = await fetch(`${API_BASE}/config/agents`);
+                const data = await response.json();
+                
+                const tbody = document.querySelector('#agentConfigTable tbody');
+                tbody.innerHTML = '';
+                
+                for (const [name, config] of Object.entries(data.agents)) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${config.name}</td>
+                        <td>${config.role}</td>
+                        <td>${config.model}</td>
+                        <td>${config.workspace || 'default'}</td>
+                        <td>
+                            <button class="btn btn-primary" onclick="editAgent('${name}')">编辑</button>
+                            <button class="btn btn-danger" onclick="deleteAgent('${name}')">删除</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            } catch (error) {
+                addLog(`加载 Agent 配置失败：${error.message}`, 'error');
+            }
+        }
+
+        async function loadModelConfigs() {
+            try {
+                const response = await fetch(`${API_BASE}/config/models`);
+                const data = await response.json();
+                
+                const tbody = document.querySelector('#modelConfigTable tbody');
+                tbody.innerHTML = '';
+                
+                for (const [name, config] of Object.entries(data.models)) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${config.name}</td>
+                        <td>${config.provider}</td>
+                        <td>${config.model_name}</td>
+                        <td>${config.context_window || 'N/A'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            } catch (error) {
+                addLog(`加载模型配置失败：${error.message}`, 'error');
+            }
+        }
+
+        // 启动 Agent
+        async function startAgent(name) {
+            try {
+                const response = await fetch(`${API_BASE}/agents/${name}/start`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    addLog(`Agent ${name} 已启动`, 'info');
+                    loadAgents();
+                } else {
+                    addLog(`启动失败：${data.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`启动失败：${error.message}`, 'error');
+            }
+        }
+
+        // 停止 Agent
+        async function stopAgent(name) {
+            try {
+                const response = await fetch(`${API_BASE}/agents/${name}/stop`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    addLog(`Agent ${name} 已停止`, 'info');
+                    loadAgents();
+                } else {
+                    addLog(`停止失败：${data.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`停止失败：${error.message}`, 'error');
+            }
+        }
+
+        // 添加日志
+        function addLog(message, type = 'info') {
+            const console = document.getElementById('logConsole');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            console.appendChild(entry);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        // 加载会话
+        async function loadSessions() {
+            try {
+                const response = await fetch(`${API_BASE}/sessions`);
+                const data = await response.json();
+                
+                const sessionList = document.getElementById('sessionList');
+                sessionList.innerHTML = '<p>共 ' + data.sessions.length + ' 个会话</p>';
+            } catch (error) {
+                addLog(`加载会话失败：${error.message}`, 'error');
+            }
+        }
+
+        // 加载工作空间
+        async function loadWorkspaces() {
+            try {
+                const response = await fetch(`${API_BASE}/workspaces`);
+                const data = await response.json();
+                
+                const workspaceList = document.getElementById('workspaceList');
+                workspaceList.innerHTML = '<p>共 ' + data.workspaces.length + ' 个工作空间</p>';
+            } catch (error) {
+                addLog(`加载工作空间失败：${error.message}`, 'error');
+            }
+        }
+
+        // 加载渠道
+        async function loadChannels() {
+            try {
+                const response = await fetch(`${API_BASE}/channels`);
+                const data = await response.json();
+                
+                const channelList = document.getElementById('channelList');
+                channelList.innerHTML = '<p>共 ' + data.channels.length + ' 个渠道</p>';
+            } catch (error) {
+                addLog(`加载渠道失败：${error.message}`, 'error');
+            }
+        }
+
+        // 初始加载
+        loadStats();
+        setInterval(loadStats, 5000);
+    </script>
+</body>
+</html>
