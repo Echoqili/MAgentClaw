@@ -287,6 +287,111 @@ async def test_parallel_tools():
     print("\n✓ 并行工具执行测试完成")
 
 
+async def test_reviewer_agent():
+    """测试审核员 Agent"""
+    print("\n=== 测试审核员 Agent ===")
+    
+    from maagentclaw.agents.reviewer import (
+        ReviewerAgent, ReviewerConfig, ReviewCategory, ReviewResult, Severity
+    )
+    
+    # 创建审核员
+    config = ReviewerConfig(
+        name="质量审核员",
+        role="内容审核",
+        quality_threshold=70.0,
+        compliance_required=True,
+        sensitive_words=["敏感词1", "敏感词2"]
+    )
+    reviewer = ReviewerAgent(config)
+    
+    # 测试审核通过的内容
+    good_content = "这是一个高质量的内容，包含了详细的信息和分析。"
+    report = await reviewer.review(good_content, "test_001")
+    
+    print(f"\n审核通过内容结果：")
+    print(f"  结果：{report.result.value}")
+    print(f"  分数：{report.score}")
+    print(f"  问题数：{len(report.issues)}")
+    
+    # 测试审核包含敏感词的内容
+    bad_content = "这是一个包含敏感词1的内容，需要修改。"
+    report2 = await reviewer.review(bad_content, "test_002")
+    
+    print(f"\n审核含敏感词内容结果：")
+    print(f"  结果：{report2.result.value}")
+    print(f"  分数：{report2.score}")
+    print(f"  问题数：{len(report2.issues)}")
+    if report2.issues:
+        print(f"  问题：{report2.issues[0].description}")
+    
+    # 测试统计
+    stats = reviewer.get_statistics()
+    print(f"\n审核统计：{stats}")
+    
+    print("\n✓ 审核员 Agent 测试完成")
+
+
+async def test_presenter_agent():
+    """测试展示员 Agent"""
+    print("\n=== 测试展示员 Agent ===")
+    
+    from maagentclaw.agents.presenter import (
+        PresenterAgent, PresentationConfig, OutputFormat
+    )
+    
+    # 创建展示员
+    config = PresentationConfig(
+        name="结果展示员",
+        role="内容展示",
+        default_format=OutputFormat.MARKDOWN
+    )
+    presenter = PresenterAgent(config)
+    
+    # 测试展示字典数据
+    data = {
+        "status": "success",
+        "message": "操作成功",
+        "data": {
+            "id": 123,
+            "name": "测试项目",
+            "value": 1000
+        }
+    }
+    
+    result = await presenter.present(
+        data=data,
+        title="测试结果",
+        format=OutputFormat.MARKDOWN
+    )
+    
+    print(f"\n展示结果：")
+    print(f"  标题：{result.title}")
+    print(f"  摘要：{result.summary}")
+    print(f"  格式：{result.format.value}")
+    print(f"  区块数：{len(result.sections)}")
+    
+    # 渲染 Markdown
+    rendered = result.metadata.get("rendered", "")
+    if rendered:
+        print(f"\n渲染内容（前200字符）：")
+        print(rendered[:200])
+    
+    # 测试 HTML 格式
+    result_html = await presenter.present(
+        data=data,
+        title="HTML测试",
+        format=OutputFormat.HTML
+    )
+    print(f"\nHTML格式渲染：{len(result_html.metadata.get('rendered', ''))} 字符")
+    
+    # 测试统计
+    stats = presenter.get_statistics()
+    print(f"\n展示统计：{stats}")
+    
+    print("\n✓ 展示员 Agent 测试完成")
+
+
 async def main():
     """运行所有测试"""
     print("=" * 60)
@@ -301,6 +406,8 @@ async def main():
         await test_enhanced_agent_config()
         await test_checkpoint()
         await test_parallel_tools()
+        await test_reviewer_agent()
+        await test_presenter_agent()
         
         print("\n" + "=" * 60)
         print("✓ 所有测试通过!")
