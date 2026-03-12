@@ -4,7 +4,7 @@ Tools - 工具包
 所有内置工具的集合
 """
 
-from .web_search import WebSearchTool
+from .web_search import WebSearchTool, NewsSearchTool, AcademicSearchTool
 from .url_fetcher import URLFetcherTool
 from .json_processor import JSONProcessorTool
 from .text_processor import TextProcessorTool
@@ -14,7 +14,7 @@ from .task_executor import (
     ToolRegistry,
     TaskExecutor,
     StreamingTaskExecutor,
-    ToolResult as ExecutorToolResult
+    ToolResult
 )
 
 __all__ = [
@@ -23,9 +23,12 @@ __all__ = [
     "ToolRegistry",
     "TaskExecutor",
     "StreamingTaskExecutor",
-    "ExecutorToolResult",
-    # 工具
+    "ToolResult",
+    # 搜索工具
     "WebSearchTool",
+    "NewsSearchTool",
+    "AcademicSearchTool",
+    # 其他工具
     "URLFetcherTool",
     "JSONProcessorTool",
     "TextProcessorTool",
