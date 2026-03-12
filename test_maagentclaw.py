@@ -155,6 +155,138 @@ async def test_config_manager():
     print("\n✓ 配置管理器测试完成")
 
 
+async def test_enhanced_agent_config():
+    """测试增强版 Agent 配置（角色定义）"""
+    print("\n=== 测试增强版 Agent 配置 ===")
+    
+    # 创建带有增强角色的 Agent
+    config = AgentConfig(
+        name="researcher",
+        role="高级研究员",
+        description="专业的技术研究员",
+        goal="深入分析技术趋势，提供专业见解",
+        backstory="你是一位经验丰富的技术研究员，拥有10年行业经验，擅长发现新兴技术趋势",
+        responsibilities=[
+            "收集和分析最新技术信息",
+            "撰写技术研究报告",
+            "为团队提供技术咨询"
+        ],
+        skills=["信息检索", "数据分析", "报告撰写"],
+        available_tools=["web_search", "pdf_reader", "code_interpreter"],
+        allow_delegation=True,
+        max_delegation_depth=2,
+        verbose=True
+    )
+    
+    agent = SimpleAgent(config)
+    
+    # 生成系统提示
+    system_prompt = agent.generate_system_prompt()
+    print(f"\n生成的系统提示：\n{system_prompt}")
+    
+    # 检查委托能力
+    can_delegate = agent.can_delegate()
+    print(f"\n允许委托：{can_delegate}")
+    
+    print("\n✓ 增强版 Agent 配置测试完成")
+
+
+async def test_checkpoint():
+    """测试断点续传功能"""
+    print("\n=== 测试断点续传功能 ===")
+    
+    from maagentclaw.agents.examples import SimpleAgent
+    from maagentclaw.managers.collaboration import CollaborationSession, CollaborationMode
+    
+    # 创建 Agent
+    config = AgentConfig(name="test_agent", role="tester")
+    agent = SimpleAgent(config)
+    
+    # 添加一些记忆
+    for i in range(5):
+        msg = AgentMessage(content=f"消息 {i}", role="user")
+        agent.add_to_memory(msg)
+    
+    # 添加任务历史
+    agent.add_task_to_history("任务1", {"result": "完成"})
+    agent.add_task_to_history("任务2", {"result": "完成"})
+    
+    # 获取检查点数据
+    checkpoint = agent.get_checkpoint_data()
+    print(f"\n检查点数据已保存")
+    print(f"记忆数量：{len(checkpoint['memory'])}")
+    print(f"任务历史：{len(checkpoint['state']['task_history'])}")
+    
+    # 模拟加载检查点
+    new_agent = SimpleAgent(AgentConfig(name="new_agent", role="tester"))
+    new_agent.load_checkpoint_data(checkpoint)
+    
+    print(f"\n恢复后记忆数量：{len(new_agent.memory)}")
+    print(f"恢复后任务历史：{len(new_agent.state.task_history)}")
+    
+    # 测试协作会话的检查点
+    session = CollaborationSession(
+        name="测试会话",
+        mode=CollaborationMode.PARALLEL,
+        participants=["agent1", "agent2"],
+        checkpoint_enabled=True
+    )
+    
+    checkpoint_data = session.save_checkpoint()
+    print(f"\n协作会话检查点已保存")
+    print(f"会话名称：{checkpoint_data['name']}")
+    print(f"参与者：{checkpoint_data['participants']}")
+    
+    print("\n✓ 断点续传功能测试完成")
+
+
+async def test_parallel_tools():
+    """测试并行工具执行"""
+    print("\n=== 测试并行工具执行 ===")
+    
+    from maagentclaw.tools import TaskExecutor, ToolRegistry
+    from maagentclaw.tools.task_executor import BaseToolExecutor
+    
+    # 定义测试工具
+    class MockTool(BaseToolExecutor):
+        async def execute(self, **kwargs):
+            await asyncio.sleep(0.1)  # 模拟执行时间
+            return f"执行了 {self.name}"
+    
+    # 创建工具注册中心
+    registry = ToolRegistry()
+    registry.register(MockTool("tool1", "工具1"))
+    registry.register(MockTool("tool2", "工具2"))
+    registry.register(MockTool("tool3", "工具3"))
+    
+    # 创建执行器
+    executor = TaskExecutor(registry)
+    
+    # 测试并行执行
+    import time
+    start = time.time()
+    
+    result = await executor.execute_single_task(
+        task="测试任务",
+        tools=["tool1", "tool2", "tool3"],
+        context={}
+    )
+    
+    elapsed = time.time() - start
+    
+    print(f"\n执行结果：")
+    print(f"  成功：{result['success']}")
+    print(f"  并行执行：{result['parallel']}")
+    print(f"  执行时间：{elapsed:.2f}秒")
+    print(f"  工具数量：{len(result['tool_results'])}")
+    
+    # 测试执行统计
+    stats = executor.get_execution_stats()
+    print(f"\n执行统计：{stats}")
+    
+    print("\n✓ 并行工具执行测试完成")
+
+
 async def main():
     """运行所有测试"""
     print("=" * 60)
@@ -166,6 +298,9 @@ async def main():
         await test_agent_manager()
         await test_collaboration()
         await test_config_manager()
+        await test_enhanced_agent_config()
+        await test_checkpoint()
+        await test_parallel_tools()
         
         print("\n" + "=" * 60)
         print("✓ 所有测试通过!")

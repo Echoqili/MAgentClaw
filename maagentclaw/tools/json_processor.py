@@ -5,6 +5,7 @@ JSON 格式化和验证
 """
 
 import json
+from typing import Dict, Any, List, Optional
 from ..managers.tool_manager import BaseTool, ToolMetadata, ToolConfig, ToolResult, ToolPermission
 
 

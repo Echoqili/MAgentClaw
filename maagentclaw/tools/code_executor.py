@@ -7,6 +7,7 @@
 import sys
 import io
 from contextlib import redirect_stdout, redirect_stderr
+from typing import Dict, Any, Optional
 from ..managers.tool_manager import BaseTool, ToolMetadata, ToolConfig, ToolResult, ToolPermission
 
 

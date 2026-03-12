@@ -5,6 +5,7 @@
 """
 
 import aiohttp
+from typing import Optional
 from ..managers.tool_manager import BaseTool, ToolMetadata, ToolConfig, ToolResult, ToolPermission
 
 
